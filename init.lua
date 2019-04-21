@@ -1,32 +1,37 @@
-minetest.log('action', '[friendlierchat] CSM loading...')
+minetest.log('action', '[friendlier_chat] CSM loading...')
 
 local mod_storage = minetest.get_mod_storage()
-local my_name = nil
+local my_name = ''
 local colors = {
     server='#FF9900',
-    self='#FF9999',
+    self='#FFFF00',
     admin='#00FFFF',
     privileged='#FFFF00',
-    friend='#FF00FF',
-    other='#00FF00',
+    friend='#00FF00',
+    other='#FF00FF',
     trouble='#FF0000',
     default='#888888'
 }
 
-function safe(func)
+local function safe(func)
     return function(...)
         local status, out = pcall(func, ...)
         if status then
             return out
         else
-            minetest.log('warning', '[friendlierchat] Error (func):  ' .. out)
+            minetest.log('warning', '[friendlier_chat] Error (func):  ' .. out)
             return nil
         end
     end
 end
 
 
-function pairsByKeys(t, f)
+local function lc_cmp(a, b)
+    return a:lower() < b:lower()
+end
+
+
+local function pairsByKeys(t, f)
     local a = {}
     for n in pairs(t) do table.insert(a, n) end
     table.sort(a, f)
@@ -53,7 +58,7 @@ end
 
 local function unkey(name)
     local pattern = server_id .. ':(.*)'
-    return string.match(name, pattern)
+    return name:match(pattern)
 end
 
 
@@ -90,7 +95,7 @@ minetest.register_chatcommand('fcs', {
     params = '<name> <status>',
     description = 'register a name w/ a status',
     func = safe(function(param)
-        local name, status = string.match(param, '^(%S+)%s+(%S+)$')
+        local name, status = param:match('^(%S+)%s+(%S+)$')
         if name ~= nil then
             if not colors[status] then
                 minetest.display_chat_message(minetest.colorize('#FF0000', 'unknown status "' .. status .. '"'))
@@ -110,7 +115,8 @@ minetest.register_chatcommand('fcs', {
 minetest.register_chatcommand('fcrm', {
     params = '<name>',
     description = 'unregister a name',
-    func = safe(function(param)
+    func = safe(function(name)
+        mod_strage:set_string(key(name), 'default')
     end),
 })
 
@@ -118,7 +124,7 @@ minetest.register_chatcommand('fcrm', {
 minetest.register_chatcommand('fcls', {
     description = 'list all statuses',
     func = safe(function()
-        for name, status in pairsByKeys(mod_storage:to_table().fields) do
+        for name, status in pairsByKeys(mod_storage:to_table().fields, lc_cmp) do
             name = unkey(name)
             local color = colors[status] or colors.default
             minetest.display_chat_message(minetest.colorize(color, name .. ': ' .. status))
@@ -140,25 +146,53 @@ end
 
 
 local function get_color_by_name(name)
-    local suffix
-    name, suffix = string.match(name, '^([^@]+)(@?.*)$')  -- IRC users
+    local _
+    name, _ = name:match('^([^@]+).*$')  -- IRC users
+    name, _ = name:match('^([^[]+).*$')  -- matrix users
 
     local status = mod_storage:get_string(key(name))
     return colors[status] or colors.default
 end
 
 
+local function color_name(name)
+    local color = get_color_by_name(name)
+    return minetest.colorize(color, name)
+end
+
+
+local function color_names(names, delim)
+    local text = ''
+    local sorted_names = {}
+
+    for name in names:gmatch('[%w_]+') do
+        table.insert(sorted_names, name)
+    end
+
+    table.sort(sorted_names, lc_cmp)
+
+    for _, name in ipairs(sorted_names) do
+        text = text .. color_name(name) .. delim
+    end
+
+    if text ~= '' then
+        text = text:sub(1, -(delim:len() + 1))  -- remove last delimiter
+    end
+
+    return text
+end
+
+
 local function color_name_and_text(name, text)
     local color = get_color_by_name(name)
-    name = minetest.colorize(color, name)
-    if string.match(text, my_name) then
+    if text:match(my_name) then
         text = minetest.colorize(colors.self, text)
 
     elseif color == colors.default then
         text = minetest.colorize(color, text)
 
     end
-    return name, text
+    return color_name(name), text
 end
 
 
@@ -167,7 +201,7 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
     local msg = clean_android(minetest.strip_colors(message))
 
     -- join/part messages
-    local name, text = string.match(msg, '^%*%*%* (%S+) (.*)$')
+    local name, text = msg:match('^%*%*%* (%S+) (.*)$')
     if name and text then
         name, text = color_name_and_text(name, text)
         minetest.display_chat_message('*** ' .. name .. ' ' .. text)
@@ -175,7 +209,7 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
     end
 
     -- normal messages
-    local name, text = string.match(msg, '^<([^%s>]+)>%s+(.*)$')
+    local name, text = msg:match('^<([^%s>]+)>%s+(.*)$')
     if name and text then
         name, text = color_name_and_text(name, text)
         minetest.display_chat_message('<' .. name .. '> ' .. text)
@@ -183,7 +217,7 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
     end
 
     -- /me messages
-    local name, text = string.match(msg, '^%* (%S+) (.*)$')
+    local name, text = msg:match('^%* (%S+) (.*)$')
     if name and text then
         name, text = color_name_and_text(name, text)
         minetest.display_chat_message('* ' .. name .. ' ' .. text)
@@ -191,9 +225,10 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
     end
 
     -- /msg messages
-    local name, text = string.match(msg, '^PM from (%S+): (.*)$')
+    local name, text = msg:match('^PM from (%S+): (.*)$')
     if name and text then
-        name, text = color_name_and_text(name, text)
+        name = color_name(name)
+        text = minetest.colorize(colors.self, text)
         minetest.display_chat_message(
             minetest.colorize(colors.server, 'PM from ')
             .. name
@@ -204,9 +239,10 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
     end
 
     -- /tell messages
-    local name, text = string.match(msg, '^(%S+) whispers: (.*)$')
+    local name, text = msg:match('^(%S+) whispers: (.*)$')
     if name and text then
-        name, text = color_name_and_text(name, text)
+        name = color_name(name)
+        text = minetest.colorize(colors.self, text)
         minetest.display_chat_message(
             name
             .. minetest.colorize(colors.server, ' whispers: ')
@@ -214,6 +250,29 @@ minetest.register_on_receiving_chat_messages(safe(function(message)
         )
         return true
     end
+
+    -- /who
+    local names = msg:match('^Players in channel: (.*)$')
+    if names then
+        local text = minetest.colorize(colors.server, 'Players in channel: ')
+        text = text .. color_names(names, ', ')
+        minetest.display_chat_message(text)
+        return true
+    end
+
+    -- /status
+    local text, names, lastbit = msg:match('^# Server: (.*) clients={([^}]*)}(.*)')
+    if text and names then
+        local text = minetest.colorize(colors.server, '# Server: ' .. text .. ' clients={')
+        text = text .. color_names(names, ', ')
+        text = text .. minetest.colorize(colors.server, '}' .. lastbit)
+        minetest.display_chat_message(text)
+        return true
+    end
+
+    -- other server messages
+    minetest.display_chat_message(minetest.colorize(colors.server, msg))
+    return true
 
 end))
 end
