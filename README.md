@@ -1,18 +1,23 @@
 minetest CSM which
 
-= requirements =
+requirements
+------------
 
 tested with minetest 0.4.17 and 5.0.
 
 only basic CSM need be enabled in 5.0, which is the default.
 
-= installation =
+installation
+------------
 
-make sure the mod is installed at ~/.minetest/clientmods/XXXXXXX
+make sure the mod is installed at `~/.minetest/clientmods/XXXXXXX`
 
-make sure ~/.minetest/clientmods/mods.conf exists and contains:
+make sure `~/.minetest/clientmods/mods.conf` exists and contains:
 
+```config
 load_mod_XXXXXXX = true
+```
 
-= usage =
+usage
+-----
 
