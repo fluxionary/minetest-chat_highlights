@@ -1,4 +1,4 @@
-minetest CSM which
+minetest CSM which makes busy public chat easier to parse by coloring certain things.
 
 requirements
 ------------
@@ -10,14 +10,22 @@ only basic CSM need be enabled in 5.0, which is the default.
 installation
 ------------
 
-make sure the mod is installed at `~/.minetest/clientmods/XXXXXXX`
+make sure the mod is installed at `~/.minetest/clientmods/chat_highlights`
 
 make sure `~/.minetest/clientmods/mods.conf` exists and contains:
 
 ```config
-load_mod_XXXXXXX = true
+load_mod_chat_highlights = true
 ```
 
 usage
 -----
 
+* .ch_toggle: turns chat highlighting on/off for the current server (defaults to on)
+* .ch_statuses: lists the available statuses
+* .ch_set <player> <status>: set the status of `<player>`
+* .ch_list: lists the status of all players
+* .ch_unset <player>: unset the status of `<player>`
+* .ch_alert_list: list all alert patterns
+* .ch_alert_set <pattern>: set an pattern to alert on
+* .ch_alert_unset <pattern>: unset a pattern to alert on

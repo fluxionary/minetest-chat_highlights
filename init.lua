@@ -20,7 +20,7 @@ local COLOR_BY_STATUS = {
     admin='#00FFFF',
     privileged='#FFFF00',
     friend='#00FF00',
-    contact='#0000FF',
+    contact='#4444FF',
     other='#FF00FF',
     trouble='#FF0000',
 }
@@ -251,13 +251,13 @@ if minetest.register_on_connect then
 elseif minetest.register_on_mods_loaded then
     minetest.register_on_mods_loaded(set_my_name)
 else
-    set_my_name()
+    minetest.after(1, set_my_name)
 end
 
 -- END initalization --
 -- chat commands --
 
-minetest.register_chatcommand('fc_toggle', {
+minetest.register_chatcommand('ch_toggle', {
     description = ('turn %s on/off for this server'):format(mod_name),
     func = safe(function()
         local current_status = toggle_disable_this_server()
@@ -271,7 +271,7 @@ minetest.register_chatcommand('fc_toggle', {
 })
 
 
-minetest.register_chatcommand('fc_ss', {
+minetest.register_chatcommand('ch_statuses', {
     description = 'list statuses',
     func = safe(function()
         for name, color in pairsByKeys(COLOR_BY_STATUS) do
@@ -283,7 +283,7 @@ minetest.register_chatcommand('fc_ss', {
 })
 
 
-minetest.register_chatcommand('fc_s', {
+minetest.register_chatcommand('ch_set', {
     params = '<name> <status>',
     description = 'associate a name w/ a status',
     func = safe(function(param)
@@ -304,7 +304,7 @@ minetest.register_chatcommand('fc_s', {
 })
 
 
-minetest.register_chatcommand('fc_rm', {
+minetest.register_chatcommand('ch_unset', {
     params = '<name>',
     description = 'unregister a name',
     func = safe(function(name)
@@ -314,7 +314,7 @@ minetest.register_chatcommand('fc_rm', {
 })
 
 
-minetest.register_chatcommand('fc_ls', {
+minetest.register_chatcommand('ch_list', {
     description = 'list all statuses',
     func = safe(function()
         for name, status in pairsByKeys(status_by_name, lc_cmp) do
@@ -325,7 +325,7 @@ minetest.register_chatcommand('fc_ls', {
 })
 
 
-minetest.register_chatcommand('fc_a_ls', {
+minetest.register_chatcommand('ch_alert_list', {
     description = 'list all alert patterns',
     func = safe(function()
         for pattern, _ in pairsByKeys(alert_patterns, lc_cmp) do
@@ -335,7 +335,7 @@ minetest.register_chatcommand('fc_a_ls', {
 })
 
 
-minetest.register_chatcommand('fc_a_s', {
+minetest.register_chatcommand('ch_alert_set', {
     params = '<pattern>',
     description = 'alert on a given pattern',
     func = safe(function(pattern)
@@ -344,7 +344,7 @@ minetest.register_chatcommand('fc_a_s', {
 })
 
 
-minetest.register_chatcommand('fc_a_rm', {
+minetest.register_chatcommand('ch_alert_unset', {
     params = '<pattern>',
     description = 'no longer alert on a given pattern',
     func = safe(function(pattern)
@@ -404,6 +404,7 @@ end
 local function color_text(name, text)
     for pattern, _ in pairs(alert_patterns) do
         if text:lower():match(pattern:lower()) then
+            minetest.sound_play('default_dug_metal')
             return minetest.colorize(COLOR_BY_STATUS.self, text)
         end
     end
