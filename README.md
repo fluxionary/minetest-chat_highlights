@@ -23,9 +23,9 @@ usage
 
 * .ch_toggle: turns chat highlighting on/off for the current server (defaults to on)
 * .ch_statuses: lists the available statuses
-* .ch_set <player> <status>: set the status of `<player>`
+* .ch_set PLAYERNAME STATUS: set the status of `PLAYER`
 * .ch_list: lists the status of all players
-* .ch_unset <player>: unset the status of `<player>`
+* .ch_unset PLAYER: unset the status of `PLAYER`
 * .ch_alert_list: list all alert patterns
-* .ch_alert_set <pattern>: set an pattern to alert on
-* .ch_alert_unset <pattern>: unset a pattern to alert on
+* .ch_alert_set PATTERN: set an pattern to alert on
+* .ch_alert_unset PATTERN: unset a pattern to alert on
