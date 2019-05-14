@@ -357,7 +357,7 @@ minetest.register_chatcommand('ch_alert_unset', {
 
 local function clean_android(msg)
     -- supposedly, android surrounds messages with (c@#ffffff)
-    if msg:sub(1, 1) == '(' then -- strip preceeding
+    if msg:sub(1, 4) == '(c@#' then -- strip preceeding
         msg = msg:sub(msg:find(')') + 1, -1)
         if msg:sub(-11, -8) == '(c@#' then -- strip trailing
             msg = msg:sub(-11)
@@ -416,6 +416,27 @@ local function color_text(name, text)
     else
         color = lighten(color, LIGHTEN_TEXT_BY)
         return minetest.colorize(color, text)
+    end
+end
+
+
+local function idiv(a, b)
+    return (a - (a % b)) / b
+end
+
+
+local function seconds_to_interval(time)
+    local s = time % 60; time = idiv(time, 60)
+    local m = time % 60; time = idiv(time, 60)
+    local h = time % 24; time = idiv(time, 24)
+    if time ~= 0 then
+        return ('%d days %02d:%02d:%02d'):format(time, h, m, s)
+    elseif h ~= 0 then
+        return ('%02d:%02d:%02d'):format(h, m, s)
+    elseif m ~= 0 then
+        return ('%02d:%02d'):format(m, s)
+    else
+        return ('%d seconds'):format(s)
     end
 end
 
@@ -603,6 +624,21 @@ register_on_receive(safe(function(message)
             color_name(name),
             color_text(name, '>'),
             color_text(name, text)
+        ))
+        return true
+    end
+
+    local pos, name, item1, item2, time = msg:match('%((%-?%d+,%-?%d+,%-?%d+)%) player:(%S+) (%S*) %-> (%S*) (%d+) seconds ago%.')
+    if pos and name and item1 and item2 and time then
+        if item1 == 'air' then item1 = minetest.colorize('#FF0000', item1) else item1 = minetest.colorize(COLOR_BY_STATUS.server, item1) end
+        if item2 == 'air' then item2 = minetest.colorize('#FF0000', item2) else item2 = minetest.colorize(COLOR_BY_STATUS.server, item2) end
+
+        minetest.display_chat_message(('(%s) player:%s %s -> %s %s ago.'):format(
+            minetest.colorize(COLOR_BY_STATUS.server, pos),
+            color_name(name),
+            item1,
+            item2,
+            seconds_to_interval(tonumber(time))
         ))
         return true
     end
