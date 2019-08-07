@@ -225,7 +225,6 @@ end
 -- END mod_storage access --
 -- initalization --
 
-local set_my_name_tries = 0
 local set_my_name = safe(function()
     local name
     if minetest.localplayer then
@@ -237,9 +236,6 @@ local set_my_name = safe(function()
         if AUTO_ALERT_ON_NAME then
             add_alert_pattern(name)
         end
-    elseif set_my_name_tries < 20 then
-        set_my_name_tries = set_my_name_tries + 1
-        minetest.after(1, set_my_name)
     else
         log('warning', 'could not determine name!')
     end
@@ -495,6 +491,7 @@ register_on_receive(safe(function(message)
             minetest.colorize(COLOR_BY_STATUS.server, ': '),
             minetest.colorize(COLOR_BY_STATUS.self, text)
         ))
+        minetest.sound_play('default_place_node_metal')
         return true
     end
 
@@ -506,6 +503,7 @@ register_on_receive(safe(function(message)
             minetest.colorize(COLOR_BY_STATUS.server, ' whispers: '),
             minetest.colorize(COLOR_BY_STATUS.self, text)
         ))
+        minetest.sound_play('default_place_node_metal')
         return true
     end
 
@@ -605,6 +603,7 @@ register_on_receive(safe(function(message)
     local name = msg:match('^Player ([%w_%-]+) is unverified%.$')
     if name then
         minetest.display_chat_message(minetest.colorize('#FF0000', msg))
+        minetest.sound_play('default_dug_metal')
         return true
     end
 
@@ -612,6 +611,7 @@ register_on_receive(safe(function(message)
     local name, text = msg:match('^%[unverified] <([^>]+)>%s+(.*)$')
     if name and text then
         minetest.display_chat_message(minetest.colorize('#FF0000', msg))
+        minetest.sound_play('default_dug_metal')
         return true
     end
 
@@ -628,6 +628,7 @@ register_on_receive(safe(function(message)
         return true
     end
 
+    -- rollback_check messages
     local pos, name, item1, item2, time = msg:match('%((%-?%d+,%-?%d+,%-?%d+)%) player:(%S+) (%S*) %-> (%S*) (%d+) seconds ago%.')
     if pos and name and item1 and item2 and time then
         if item1 == 'air' then item1 = minetest.colorize('#FF0000', item1) else item1 = minetest.colorize(COLOR_BY_STATUS.server, item1) end
