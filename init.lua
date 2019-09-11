@@ -471,6 +471,19 @@ register_on_receive(safe(function(message)
         return true
     end
 
+    -- prefixed messages
+    local prefix, name, text = msg:match('^(%S+)%s+<([^>]+)>%s+(.*)$')
+    if name and text then
+        minetest.display_chat_message(('%s %s%s%s %s'):format(
+            color_text(name, prefix),
+            color_text(name, '<'),
+            color_name(name),
+            color_text(name, '>'),
+            color_text(name, text)
+        ))
+        return true
+    end
+
     -- /me messages
     local name, text = msg:match('^%* (%S+) (.*)$')
     if name and text then
