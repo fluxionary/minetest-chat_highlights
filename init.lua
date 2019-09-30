@@ -460,7 +460,7 @@ register_on_receive(safe(function(message)
     end
 
     -- normal messages
-    local name, text = msg:match('^<([^>]+)>%s+(.*)$')
+    local name, text = msg:match('^<([^>%s]+)>%s+(.*)$')
     if name and text then
         minetest.display_chat_message(('%s%s%s %s'):format(
             color_text(name, '<'),
@@ -477,6 +477,19 @@ register_on_receive(safe(function(message)
         minetest.display_chat_message(('%s %s%s%s %s'):format(
             color_text(name, prefix),
             color_text(name, '<'),
+            color_name(name),
+            color_text(name, '>'),
+            color_text(name, text)
+        ))
+        return true
+    end
+
+    -- Empire of Legends messages
+    local prefix, name, text = msg:match('^<(%S+)%s+([^>]+)>%s+(.*)$')
+    if name and text then
+        minetest.display_chat_message(('%s%s %s%s %s'):format(
+            color_text(name, '<'),
+            color_text(name, prefix),
             color_name(name),
             color_text(name, '>'),
             color_text(name, text)
