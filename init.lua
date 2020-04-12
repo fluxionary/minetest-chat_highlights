@@ -521,6 +521,19 @@ register_on_receive(safe(function(message)
         return true
     end
 
+    -- /msg messages
+    local name, text = msg:match('^DM from (%S+): (.*)$')
+    if name and text then
+        minetest.display_chat_message(('%s%s%s%s'):format(
+            minetest.colorize(COLOR_BY_STATUS.server, 'DM from '),
+            color_name(name),
+            minetest.colorize(COLOR_BY_STATUS.server, ': '),
+            minetest.colorize(COLOR_BY_STATUS.self, text)
+        ))
+        minetest.sound_play('default_place_node_metal')
+        return true
+    end
+
     -- /tell messages
     local name, text = msg:match('^(%S+) whispers: (.*)$')
     if name and text then
