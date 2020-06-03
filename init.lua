@@ -225,22 +225,23 @@ end
 -- END mod_storage access --
 -- initalization --
 
-local set_my_name = safe(function()
+local set_my_name_tries = 0
+local function set_my_name()
     local name
     if minetest.localplayer then
         name = minetest.localplayer:get_name()
-    end
-    if name then
         log('action', ('you are %s'):format(name))
         set_name_status(name, 'self')
         if AUTO_ALERT_ON_NAME then
             add_alert_pattern(name)
         end
+    elseif set_my_name_tries < 20 then
+        set_my_name_tries = set_my_name_tries + 1
+        minetest.after(1, set_my_name)
     else
         log('warning', 'could not determine name!')
     end
-end)
-
+end
 
 if minetest.register_on_connect then
     minetest.register_on_connect(set_my_name)
